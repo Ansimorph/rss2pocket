@@ -1,5 +1,5 @@
 import { Toolkit } from "actions-toolkit";
-import artifact from "@actions/artifact";
+import * as artifact from '@actions/artifact';
 import Parser from "rss-parser";
 import rimraf from "rimraf";
 import { readFileSync, mkdirSync, writeFileSync } from "fs";

@@ -8976,13 +8976,20 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var actions_toolkit_1 = __webpack_require__(461);
-var artifact_1 = __importDefault(__webpack_require__(214));
+var artifact = __importStar(__webpack_require__(214));
 var rss_parser_1 = __importDefault(__webpack_require__(305));
 var rimraf_1 = __importDefault(__webpack_require__(569));
 var fs_1 = __webpack_require__(747);
@@ -9000,7 +9007,7 @@ function storeSucessDate(date) {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    client = artifact_1.default.create();
+                    client = artifact.create();
                     file = path_1.join(WORKDIR, FILE_NAME);
                     // cleanup old directories if needed
                     rimraf_1.default.sync(WORKDIR);
@@ -9020,7 +9027,7 @@ function loadSuccessDate() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    client = artifact_1.default.create();
+                    client = artifact.create();
                     // cleanup old directories if needed
                     rimraf_1.default.sync(WORKDIR);
                     fs_1.mkdirSync(WORKDIR);
