@@ -9,7 +9,7 @@ You can use this action in a workflow file like any other:
 See https://www.jamesfmackenzie.com/getting-started-with-the-pocket-developer-api/ on how to get access token and consumer key
 
 ```yml
-name: Update this repo's README
+name: Push that RSS to pocket
 
 on:
   schedule:
