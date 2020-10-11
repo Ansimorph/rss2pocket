@@ -1,0 +1,21 @@
+{
+  "name": "rss-to-pocket-action",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx ncc build ./src/index.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@actions/artifact": "^0.4.0",
+    "@types/rimraf": "^3.0.0",
+    "actions-toolkit": "^5.0.0",
+    "axios": "^0.20.0",
+    "rimraf": "^3.0.2",
+    "rss-parser": "^3.8.0"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.3"
+  }
+}

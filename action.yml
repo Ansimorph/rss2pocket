@@ -1,0 +1,18 @@
+name: RSS to Pocket
+description: Reads a number of RSS feeds and adds new articles to your pocket
+inputs:
+  feeds:
+    required: true
+    description: Comma seperated list of RSS URLs
+  pocket_consumer_key:
+    required: true
+    description: Consumer key for pocket API
+  pocket_access_token:
+    required: true
+    description: Access token for pocket API
+runs:
+  using: node12
+  main: dist/index.js
+branding:
+  icon: activity
+  color: red
