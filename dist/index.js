@@ -2233,7 +2233,31 @@ function parseJson (txt, reviver, context) {
 
 /***/ }),
 /* 81 */,
-/* 82 */,
+/* 82 */
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Sanitizes an input into a string so it can be passed into issueCommand safely
+ * @param input input to sanitize into a string
+ */
+function toCommandValue(input) {
+    if (input === null || input === undefined) {
+        return '';
+    }
+    else if (typeof input === 'string' || input instanceof String) {
+        return input;
+    }
+    return JSON.stringify(input);
+}
+exports.toCommandValue = toCommandValue;
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
 /* 83 */,
 /* 84 */,
 /* 85 */,
@@ -2381,7 +2405,41 @@ function legacy (fs) {
 /* 99 */,
 /* 100 */,
 /* 101 */,
-/* 102 */,
+/* 102 */
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+// For internal use, subject to change.
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const fs = __importStar(__webpack_require__(747));
+const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
+function issueCommand(command, message) {
+    const filePath = process.env[`GITHUB_${command}`];
+    if (!filePath) {
+        throw new Error(`Unable to find environment variable for file command ${command}`);
+    }
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Missing file at path: ${filePath}`);
+    }
+    fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+        encoding: 'utf8'
+    });
+}
+exports.issueCommand = issueCommand;
+//# sourceMappingURL=file-command.js.map
+
+/***/ }),
 /* 103 */,
 /* 104 */,
 /* 105 */,
@@ -8989,6 +9047,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var _this = this;
 Object.defineProperty(exports, "__esModule", { value: true });
 var actions_toolkit_1 = __webpack_require__(461);
+var core_1 = __webpack_require__(470);
 var artifact = __importStar(__webpack_require__(214));
 var rss_parser_1 = __importDefault(__webpack_require__(305));
 var rimraf_1 = __importDefault(__webpack_require__(569));
@@ -9000,7 +9059,7 @@ var WORKDIR = path_1.join(process.cwd(), "_persist_action_dir");
 var FILE_NAME = "lastSuccessfulUpdate.txt";
 var ARTIFACT = "lastSuccessfulUpdate";
 // If no timestamp for past runs is there, one week ago is set
-var DEFAULT_TIMESPAN = 7 * 24 * 60 * 60;
+var DEFAULT_TIMESPAN = 7 * 24 * 60 * 60 * 1000;
 function storeSucessDate(date) {
     return __awaiter(this, void 0, void 0, function () {
         var client, file;
@@ -9050,6 +9109,7 @@ function loadSuccessDate() {
 function addToPocket(url, consumerKey, accessToken) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
+            core_1.info("adding url: " + url);
             axios_1.default
                 .post("https://getpocket.com/v3/add", {
                 url: url,
@@ -9075,6 +9135,7 @@ actions_toolkit_1.Toolkit.run(function (tools) { return __awaiter(_this, void 0,
                 if (!feeds || feeds.length === 0) {
                     throw new Error("No feeds found");
                 }
+                core_1.info("Last successful update at: " + new Date(lastSuccessfulUpdate).toUTCString());
                 _i = 0, feeds_1 = feeds;
                 _c.label = 2;
             case 2:
@@ -9086,12 +9147,14 @@ actions_toolkit_1.Toolkit.run(function (tools) { return __awaiter(_this, void 0,
                 if (!rssFeed.items) {
                     throw new Error("No items in feed: " + feed);
                 }
+                core_1.info("polling feed: " + feed + ", " + rssFeed.items.length + " items found");
                 for (_a = 0, _b = rssFeed.items; _a < _b.length; _a++) {
                     item = _b[_a];
-                    itemDate = Date.parse(item.isoDate ? item.isoDate : "");
-                    if (isNaN(itemDate) || !itemDate || !item.link) {
+                    if (!item.isoDate || !item.link) {
+                        core_1.info("No date or link found in item: " + item.isoDate + ", " + item.link + "}");
                         continue;
                     }
+                    itemDate = Date.parse(item.isoDate);
                     if (itemDate > lastSuccessfulUpdate) {
                         addToPocket(item.link, tools.inputs["pocket_consumer_key"], tools.inputs["pocket_access_token"]);
                     }
@@ -11529,6 +11592,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
 /**
  * Commands
  *
@@ -11582,28 +11646,14 @@ class Command {
         return cmdStr;
     }
 }
-/**
- * Sanitizes an input into a string so it can be passed into issueCommand safely
- * @param input input to sanitize into a string
- */
-function toCommandValue(input) {
-    if (input === null || input === undefined) {
-        return '';
-    }
-    else if (typeof input === 'string' || input instanceof String) {
-        return input;
-    }
-    return JSON.stringify(input);
-}
-exports.toCommandValue = toCommandValue;
 function escapeData(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A');
 }
 function escapeProperty(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A')
@@ -14355,6 +14405,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = __webpack_require__(431);
+const file_command_1 = __webpack_require__(102);
+const utils_1 = __webpack_require__(82);
 const os = __importStar(__webpack_require__(87));
 const path = __importStar(__webpack_require__(622));
 /**
@@ -14381,9 +14433,17 @@ var ExitCode;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function exportVariable(name, val) {
-    const convertedVal = command_1.toCommandValue(val);
+    const convertedVal = utils_1.toCommandValue(val);
     process.env[name] = convertedVal;
-    command_1.issueCommand('set-env', { name }, convertedVal);
+    const filePath = process.env['GITHUB_ENV'] || '';
+    if (filePath) {
+        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
+        file_command_1.issueCommand('ENV', commandValue);
+    }
+    else {
+        command_1.issueCommand('set-env', { name }, convertedVal);
+    }
 }
 exports.exportVariable = exportVariable;
 /**
@@ -14399,7 +14459,13 @@ exports.setSecret = setSecret;
  * @param inputPath
  */
 function addPath(inputPath) {
-    command_1.issueCommand('add-path', {}, inputPath);
+    const filePath = process.env['GITHUB_PATH'] || '';
+    if (filePath) {
+        file_command_1.issueCommand('PATH', inputPath);
+    }
+    else {
+        command_1.issueCommand('add-path', {}, inputPath);
+    }
     process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
 }
 exports.addPath = addPath;

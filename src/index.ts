@@ -1,5 +1,6 @@
 import { Toolkit } from "actions-toolkit";
-import * as artifact from '@actions/artifact';
+import { info } from "@actions/core";
+import * as artifact from "@actions/artifact";
 import Parser from "rss-parser";
 import rimraf from "rimraf";
 import { readFileSync, mkdirSync, writeFileSync } from "fs";
@@ -9,9 +10,9 @@ import axios from "axios";
 const parser = new Parser();
 
 interface Inputs {
-  "feeds": string;
-  "pocket_consumer_key": string;
-  "pocket_access_token": string;
+  feeds: string;
+  pocket_consumer_key: string;
+  pocket_access_token: string;
   [key: string]: string;
 }
 
@@ -19,9 +20,9 @@ const WORKDIR = join(process.cwd(), "_persist_action_dir");
 const FILE_NAME = "lastSuccessfulUpdate.txt";
 const ARTIFACT = "lastSuccessfulUpdate";
 // If no timestamp for past runs is there, one week ago is set
-const DEFAULT_TIMESPAN = 7 * 24 * 60 * 60;
+const DEFAULT_TIMESPAN = 7 * 24 * 60 * 60 * 1000;
 
-async function storeSucessDate(date: Number) {
+async function storeSuccessDate(date: number) {
   var client = artifact.create();
   const file = join(WORKDIR, FILE_NAME);
 
@@ -33,7 +34,7 @@ async function storeSucessDate(date: Number) {
   await client.uploadArtifact(ARTIFACT, [file], process.cwd());
 }
 
-async function loadSuccessDate(): Promise<Number> {
+async function loadSuccessDate(): Promise<number> {
   var client = artifact.create();
 
   // cleanup old directories if needed
@@ -54,6 +55,8 @@ async function addToPocket(
   consumerKey: String,
   accessToken: String
 ) {
+  info(`adding url: ${url}`);
+
   axios
     .post("https://getpocket.com/v3/add", {
       url: url,
@@ -74,6 +77,8 @@ Toolkit.run<Inputs>(async (tools) => {
     throw new Error("No feeds found");
   }
 
+  info(`Last successful update at: ${new Date(lastSuccessfulUpdate).toUTCString()}`);
+
   for (let feed of feeds) {
     const rssFeed = await parser.parseURL(feed);
 
@@ -81,12 +86,16 @@ Toolkit.run<Inputs>(async (tools) => {
       throw new Error(`No items in feed: ${feed}`);
     }
 
-    for (let item of rssFeed.items) {
-      const itemDate = Date.parse(item.isoDate ? item.isoDate : "");
+    info(`polling feed: ${feed}, ${rssFeed.items.length} items found`);
 
-      if (isNaN(itemDate) || !itemDate || !item.link) {
+    for (let item of rssFeed.items) {
+
+      if (!item.isoDate || !item.link) {
+        info(`No date or link found in item: ${item.isoDate}, ${item.link}}`);
         continue;
       }
+
+      const itemDate = Date.parse(item.isoDate);
 
       if (itemDate > lastSuccessfulUpdate) {
         addToPocket(
@@ -98,5 +107,5 @@ Toolkit.run<Inputs>(async (tools) => {
     }
   }
 
-  storeSucessDate(currentTime);
+  storeSuccessDate(currentTime);
 });
