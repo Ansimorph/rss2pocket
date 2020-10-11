@@ -1,12 +1,11 @@
-# RSS to README Action
+# RSS to Pocket Action
 A GitHub Action that reads RSS feeds and adds them to your pocket queue
 
 ---
 
 ## Usage
 
-You can use this action in a workflow file like any other:
-See https://www.jamesfmackenzie.com/getting-started-with-the-pocket-developer-api/ on how to get access token and consumer key
+See https://www.jamesfmackenzie.com/getting-started-with-the-pocket-developer-api/ on how to get access token and consumer key for pocket
 
 ```yml
 name: Push that RSS to pocket
