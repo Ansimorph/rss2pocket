@@ -46,8 +46,10 @@ async function loadSuccessDate(): Promise<number> {
   try {
     const file = join(WORKDIR, FILE_NAME);
     await client.downloadArtifact(ARTIFACT);
-    return Date.parse(readFileSync(file, { encoding: "utf8" }).toString());
+    const content = readFileSync(file, { encoding: "utf8" });
+    return Date.parse(content);
   } catch (error) {
+    info("Setting last successful pull date to default");
     return Date.now() - DEFAULT_TIMESPAN;
   }
 }
@@ -79,7 +81,9 @@ Toolkit.run<Inputs>(async (tools) => {
     throw new Error("No feeds found");
   }
 
-  info(`Last successful update at: ${new Date(lastSuccessfulUpdate).toUTCString()}`);
+  info(
+    `Last successful update at: ${new Date(lastSuccessfulUpdate).toUTCString()}`
+  );
 
   for (let feed of feeds) {
     const rssFeed = await parser.parseURL(feed);
@@ -91,7 +95,6 @@ Toolkit.run<Inputs>(async (tools) => {
     info(`polling feed: ${feed}, ${rssFeed.items.length} items found`);
 
     for (let item of rssFeed.items) {
-
       if (!item.isoDate || !item.link) {
         info(`No date or link found in item: ${item.isoDate}, ${item.link}}`);
         continue;

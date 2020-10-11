@@ -9085,7 +9085,7 @@ function storeSuccessDate(date) {
 }
 function loadSuccessDate() {
     return __awaiter(this, void 0, void 0, function () {
-        var client, file, error_1;
+        var client, file, content, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -9098,9 +9098,11 @@ function loadSuccessDate() {
                     return [4 /*yield*/, client.downloadArtifact(ARTIFACT)];
                 case 2:
                     _a.sent();
-                    return [2 /*return*/, Date.parse(fs_1.readFileSync(file, { encoding: "utf8" }).toString())];
+                    content = fs_1.readFileSync(file, { encoding: "utf8" });
+                    return [2 /*return*/, Date.parse(content)];
                 case 3:
                     error_1 = _a.sent();
+                    core_1.info("Setting last successful pull date to default");
                     return [2 /*return*/, Date.now() - DEFAULT_TIMESPAN];
                 case 4: return [2 /*return*/];
             }
