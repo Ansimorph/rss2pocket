@@ -9060,7 +9060,12 @@ var FILE_NAME = "lastSuccessfulUpdate.txt";
 var ARTIFACT = "lastSuccessfulUpdate";
 // If no timestamp for past runs is there, one week ago is set
 var DEFAULT_TIMESPAN = 7 * 24 * 60 * 60 * 1000;
-function storeSucessDate(date) {
+function cleanUpWorkdir() {
+    // cleanup old directories if needed
+    rimraf_1.default.sync(WORKDIR);
+    fs_1.mkdirSync(WORKDIR);
+}
+function storeSuccessDate(date) {
     return __awaiter(this, void 0, void 0, function () {
         var client, file;
         return __generator(this, function (_a) {
@@ -9068,9 +9073,7 @@ function storeSucessDate(date) {
                 case 0:
                     client = artifact.create();
                     file = path_1.join(WORKDIR, FILE_NAME);
-                    // cleanup old directories if needed
-                    rimraf_1.default.sync(WORKDIR);
-                    fs_1.mkdirSync(WORKDIR);
+                    cleanUpWorkdir();
                     fs_1.writeFileSync(file, date.toString(), { encoding: "utf8" });
                     return [4 /*yield*/, client.uploadArtifact(ARTIFACT, [file], process.cwd())];
                 case 1:
@@ -9087,9 +9090,7 @@ function loadSuccessDate() {
             switch (_a.label) {
                 case 0:
                     client = artifact.create();
-                    // cleanup old directories if needed
-                    rimraf_1.default.sync(WORKDIR);
-                    fs_1.mkdirSync(WORKDIR);
+                    cleanUpWorkdir();
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 3, , 4]);
@@ -9164,7 +9165,7 @@ actions_toolkit_1.Toolkit.run(function (tools) { return __awaiter(_this, void 0,
                 _i++;
                 return [3 /*break*/, 2];
             case 5:
-                storeSucessDate(currentTime);
+                storeSuccessDate(currentTime);
                 return [2 /*return*/];
         }
     });

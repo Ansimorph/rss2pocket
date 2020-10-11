@@ -22,13 +22,17 @@ const ARTIFACT = "lastSuccessfulUpdate";
 // If no timestamp for past runs is there, one week ago is set
 const DEFAULT_TIMESPAN = 7 * 24 * 60 * 60 * 1000;
 
+function cleanUpWorkdir() {
+  // cleanup old directories if needed
+  rimraf.sync(WORKDIR);
+  mkdirSync(WORKDIR);
+}
+
 async function storeSuccessDate(date: number) {
   var client = artifact.create();
   const file = join(WORKDIR, FILE_NAME);
 
-  // cleanup old directories if needed
-  rimraf.sync(WORKDIR);
-  mkdirSync(WORKDIR);
+  cleanUpWorkdir();
 
   writeFileSync(file, date.toString(), { encoding: "utf8" });
   await client.uploadArtifact(ARTIFACT, [file], process.cwd());
@@ -37,9 +41,7 @@ async function storeSuccessDate(date: number) {
 async function loadSuccessDate(): Promise<number> {
   var client = artifact.create();
 
-  // cleanup old directories if needed
-  rimraf.sync(WORKDIR);
-  mkdirSync(WORKDIR);
+  cleanUpWorkdir();
 
   try {
     const file = join(WORKDIR, FILE_NAME);
