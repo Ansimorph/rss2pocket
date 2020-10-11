@@ -10,6 +10,9 @@ inputs:
   pocket_access_token:
     required: true
     description: Access token for pocket API
+  myToken:
+    required: true
+    description: Github Token
 runs:
   using: node12
   main: dist/index.js

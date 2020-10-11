@@ -1,10 +1,8 @@
 import { Toolkit } from "actions-toolkit";
-import { info } from "@actions/core";
-import * as artifact from "@actions/artifact";
+import { info, getInput } from "@actions/core";
+import { getOctokit } from "@actions/github";
+import {ActionsListRepoWorkflowsResponseData, ActionsListWorkflowRunsResponseData} from "@octokit/types";
 import Parser from "rss-parser";
-import rimraf from "rimraf";
-import { readFileSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
 import axios from "axios";
 
 const parser = new Parser();
@@ -13,45 +11,53 @@ interface Inputs {
   feeds: string;
   pocket_consumer_key: string;
   pocket_access_token: string;
+  myToken: string;
   [key: string]: string;
 }
 
-const WORKDIR = join(process.cwd(), "_persist_action_dir");
-const FILE_NAME = "lastSuccessfulUpdate.txt";
-const ARTIFACT = "lastSuccessfulUpdate";
 // If no timestamp for past runs is there, one week ago is set
-const DEFAULT_TIMESPAN = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_TIMESPAN = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-function cleanUpWorkdir() {
-  // cleanup old directories if needed
-  rimraf.sync(WORKDIR);
-  mkdirSync(WORKDIR);
+function getWorkflowId (workflows: ActionsListRepoWorkflowsResponseData): number {
+  return workflows.workflows.filter(
+    (workflow) => workflow.name === process.env.GITHUB_WORKFLOW
+  )[0].id;
 }
 
-async function storeSuccessDate(date: number) {
-  var client = artifact.create();
-  const file = join(WORKDIR, FILE_NAME);
-
-  cleanUpWorkdir();
-
-  writeFileSync(file, date.toString(), { encoding: "utf8" });
-  await client.uploadArtifact(ARTIFACT, [file], process.cwd());
+function getMostRecentSucessfulRun(runs: ActionsListWorkflowRunsResponseData): any {
+  return runs.workflow_runs.filter((run) => run.status === "completed")[0];
 }
 
 async function loadSuccessDate(): Promise<number> {
-  var client = artifact.create();
+  const myToken = getInput("myToken");
+  const octokit = getOctokit(myToken);
 
-  cleanUpWorkdir();
-
-  try {
-    const file = join(WORKDIR, FILE_NAME);
-    await client.downloadArtifact(ARTIFACT);
-    const content = readFileSync(file, { encoding: "utf8" });
-    return Date.parse(content);
-  } catch (error) {
-    info("Setting last successful pull date to default");
-    return Date.now() - DEFAULT_TIMESPAN;
+  if (!process.env.GITHUB_REPOSITORY || !process.env.GITHUB_WORKFLOW) {
+    throw new Error("Unknown repository or workflow");
   }
+
+  const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+
+  const {data: workflows} = await octokit.actions.listRepoWorkflows({
+    owner: owner,
+    repo: repo,
+  });
+
+  if (!workflows || workflows.total_count === 0) {
+    return DEFAULT_TIMESPAN;
+  }
+
+  const workflowId = getWorkflowId(workflows);
+
+  const {data: runs} = await octokit.actions.listWorkflowRuns({
+    owner: owner,
+    repo: repo,
+    workflow_id: workflowId,
+  });
+
+  const lastSuccessfulRun = getMostRecentSucessfulRun(runs);
+
+  return Date.parse(lastSuccessfulRun.created_at);
 }
 
 async function addToPocket(
@@ -75,7 +81,6 @@ async function addToPocket(
 Toolkit.run<Inputs>(async (tools) => {
   const lastSuccessfulUpdate = await loadSuccessDate();
   const feeds = tools.inputs["feeds"].split(/,\s*/);
-  const currentTime = Date.now();
 
   if (!feeds || feeds.length === 0) {
     throw new Error("No feeds found");
@@ -111,6 +116,4 @@ Toolkit.run<Inputs>(async (tools) => {
       }
     }
   }
-
-  storeSuccessDate(currentTime);
 });
