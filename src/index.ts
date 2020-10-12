@@ -1,7 +1,6 @@
 import { Toolkit } from "actions-toolkit";
 import { info, getInput } from "@actions/core";
 import { getOctokit } from "@actions/github";
-import {ActionsListRepoWorkflowsResponseData, ActionsListWorkflowRunsResponseData} from "@octokit/types";
 import Parser from "rss-parser";
 import axios from "axios";
 
@@ -18,14 +17,37 @@ interface Inputs {
 // If no timestamp for past runs is there, one week ago is set
 const DEFAULT_TIMESPAN = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-function getWorkflowId (workflows: ActionsListRepoWorkflowsResponseData): number {
+async function getWorkflowId(
+  owner: string,
+  repo: string,
+  octokit: ReturnType<typeof getOctokit>
+): Promise<number | undefined> {
+  const { data: workflows } = await octokit.actions.listRepoWorkflows({
+    owner: owner,
+    repo: repo,
+  });
+
+  if (!workflows || workflows.total_count === 0) return;
+
   return workflows.workflows.filter(
     (workflow) => workflow.name === process.env.GITHUB_WORKFLOW
   )[0].id;
 }
 
-function getMostRecentSucessfulRun(runs: ActionsListWorkflowRunsResponseData): any {
-  return runs.workflow_runs.filter((run) => run.status === "completed")[0];
+async function getMostRecentSucessfulRun(
+  owner: string,
+  repo: string,
+  workflowId: number,
+  octokit: ReturnType<typeof getOctokit>
+): Promise<string> {
+  const { data: runs } = await octokit.actions.listWorkflowRuns({
+    owner: owner,
+    repo: repo,
+    workflow_id: workflowId,
+  });
+
+  return runs.workflow_runs.filter((run) => run.status === "completed")[0]
+    .created_at;
 }
 
 async function loadSuccessDate(): Promise<number> {
@@ -37,27 +59,18 @@ async function loadSuccessDate(): Promise<number> {
   }
 
   const [owner, repo] = process.env.GITHUB_REPOSITORY.split("/");
+  const workflowId = await getWorkflowId(owner, repo, octokit);
 
-  const {data: workflows} = await octokit.actions.listRepoWorkflows({
-    owner: owner,
-    repo: repo,
-  });
+  if (!workflowId) return DEFAULT_TIMESPAN;
 
-  if (!workflows || workflows.total_count === 0) {
-    return DEFAULT_TIMESPAN;
-  }
+  const lastSuccessfulRun = await getMostRecentSucessfulRun(
+    owner,
+    repo,
+    workflowId,
+    octokit
+  );
 
-  const workflowId = getWorkflowId(workflows);
-
-  const {data: runs} = await octokit.actions.listWorkflowRuns({
-    owner: owner,
-    repo: repo,
-    workflow_id: workflowId,
-  });
-
-  const lastSuccessfulRun = getMostRecentSucessfulRun(runs);
-
-  return Date.parse(lastSuccessfulRun.created_at);
+  return Date.parse(lastSuccessfulRun);
 }
 
 async function addToPocket(

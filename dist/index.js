@@ -6907,15 +6907,45 @@ var axios_1 = __importDefault(__webpack_require__(53));
 var parser = new rss_parser_1.default();
 // If no timestamp for past runs is there, one week ago is set
 var DEFAULT_TIMESPAN = Date.now() - 7 * 24 * 60 * 60 * 1000;
-function getWorkflowId(workflows) {
-    return workflows.workflows.filter(function (workflow) { return workflow.name === process.env.GITHUB_WORKFLOW; })[0].id;
+function getWorkflowId(owner, repo, octokit) {
+    return __awaiter(this, void 0, void 0, function () {
+        var workflows;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, octokit.actions.listRepoWorkflows({
+                        owner: owner,
+                        repo: repo,
+                    })];
+                case 1:
+                    workflows = (_a.sent()).data;
+                    if (!workflows || workflows.total_count === 0)
+                        return [2 /*return*/];
+                    return [2 /*return*/, workflows.workflows.filter(function (workflow) { return workflow.name === process.env.GITHUB_WORKFLOW; })[0].id];
+            }
+        });
+    });
 }
-function getMostRecentSucessfulRun(runs) {
-    return runs.workflow_runs.filter(function (run) { return run.status === "completed"; })[0];
+function getMostRecentSucessfulRun(owner, repo, workflowId, octokit) {
+    return __awaiter(this, void 0, void 0, function () {
+        var runs;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, octokit.actions.listWorkflowRuns({
+                        owner: owner,
+                        repo: repo,
+                        workflow_id: workflowId,
+                    })];
+                case 1:
+                    runs = (_a.sent()).data;
+                    return [2 /*return*/, runs.workflow_runs.filter(function (run) { return run.status === "completed"; })[0]
+                            .created_at];
+            }
+        });
+    });
 }
 function loadSuccessDate() {
     return __awaiter(this, void 0, void 0, function () {
-        var myToken, octokit, _a, owner, repo, workflows, workflowId, runs, lastSuccessfulRun;
+        var myToken, octokit, _a, owner, repo, workflowId, lastSuccessfulRun;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -6925,25 +6955,15 @@ function loadSuccessDate() {
                         throw new Error("Unknown repository or workflow");
                     }
                     _a = process.env.GITHUB_REPOSITORY.split("/"), owner = _a[0], repo = _a[1];
-                    return [4 /*yield*/, octokit.actions.listRepoWorkflows({
-                            owner: owner,
-                            repo: repo,
-                        })];
+                    return [4 /*yield*/, getWorkflowId(owner, repo, octokit)];
                 case 1:
-                    workflows = (_b.sent()).data;
-                    if (!workflows || workflows.total_count === 0) {
+                    workflowId = _b.sent();
+                    if (!workflowId)
                         return [2 /*return*/, DEFAULT_TIMESPAN];
-                    }
-                    workflowId = getWorkflowId(workflows);
-                    return [4 /*yield*/, octokit.actions.listWorkflowRuns({
-                            owner: owner,
-                            repo: repo,
-                            workflow_id: workflowId,
-                        })];
+                    return [4 /*yield*/, getMostRecentSucessfulRun(owner, repo, workflowId, octokit)];
                 case 2:
-                    runs = (_b.sent()).data;
-                    lastSuccessfulRun = getMostRecentSucessfulRun(runs);
-                    return [2 /*return*/, Date.parse(lastSuccessfulRun.created_at)];
+                    lastSuccessfulRun = _b.sent();
+                    return [2 /*return*/, Date.parse(lastSuccessfulRun)];
             }
         });
     });
