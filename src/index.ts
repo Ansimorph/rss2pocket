@@ -11,7 +11,7 @@ interface Inputs {
   feeds: string;
   pocket_consumer_key: string;
   pocket_access_token: string;
-  myToken: string;
+  my_token: string;
   [key: string]: string;
 }
 
@@ -29,7 +29,7 @@ function getMostRecentSucessfulRun(runs: ActionsListWorkflowRunsResponseData): a
 }
 
 async function loadSuccessDate(): Promise<number> {
-  const myToken = getInput("myToken");
+  const myToken = getInput("my_token");
   const octokit = getOctokit(myToken);
 
   if (!process.env.GITHUB_REPOSITORY || !process.env.GITHUB_WORKFLOW) {

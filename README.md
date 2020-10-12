@@ -24,7 +24,7 @@ jobs:
           feeds: https://jasonet.co/rss.xml, https://www.smashingmagazine.com/feed/
           pocket_consumer_key: ${{ secrets.CONSUMER_KEY }}
           pocket_access_token: ${{ secrets.ACCESS_TOKEN }}
-
+          my_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 > Based on work by Brian Lovin and Jason Octo

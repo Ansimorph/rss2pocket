@@ -6919,7 +6919,7 @@ function loadSuccessDate() {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    myToken = core_1.getInput("myToken");
+                    myToken = core_1.getInput("my_token");
                     octokit = github_1.getOctokit(myToken);
                     if (!process.env.GITHUB_REPOSITORY || !process.env.GITHUB_WORKFLOW) {
                         throw new Error("Unknown repository or workflow");
