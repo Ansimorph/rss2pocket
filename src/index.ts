@@ -4,7 +4,7 @@ import { getOctokit } from "@actions/github";
 import Parser from "rss-parser";
 import axios from "axios";
 
-const parser = new Parser();
+const parser = new Parser({ timeout: 20000 });
 
 interface Inputs {
   feeds: string;
@@ -46,7 +46,7 @@ async function getMostRecentSucessfulRun(
     workflow_id: workflowId,
   });
 
-  return runs.workflow_runs.filter((run) => run.status === "completed")[0]
+  return runs.workflow_runs.filter((run) => run.conclusion === "success")[0]
     .created_at;
 }
 
