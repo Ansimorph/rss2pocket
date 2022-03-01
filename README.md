@@ -19,7 +19,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: Ansimorph/rss2pocket@v1
+      - uses: Ansimorph/rss2pocket@v1.1
         with:
           feeds: https://jasonet.co/rss.xml, https://www.smashingmagazine.com/feed/
           pocket_consumer_key: ${{ secrets.CONSUMER_KEY }}
