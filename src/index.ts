@@ -82,7 +82,7 @@ async function addToPocket(
 
   axios
     .post("https://getpocket.com/v3/add", {
-      url: url,
+      url: url.trim(),
       consumer_key: consumerKey,
       access_token: accessToken,
     })
